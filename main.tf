@@ -12,6 +12,20 @@ resource "google_compute_region_health_check" "backend_service_loadbalancer_heal
   }
 }
 
+resource "google_compute_region_health_check" "backend_service_loadbalancer_health_check_udp" {
+  name                = "${var.name}-at-backend-svc-lb-hc"
+  check_interval_sec  = 5
+  timeout_sec         = 5
+  healthy_threshold   = 2
+  unhealthy_threshold = 10
+  region              = var.region
+
+  http_health_check {
+    port         = 9998
+    request_path = "/"
+  }
+}
+
 locals {
   # The health check for external NLBs come from these 3 CIDRs.
   healthcheck_prober_ip_ranges = ["35.191.0.0/16", "209.85.152.0/22", "209.85.204.0/22"]
@@ -22,6 +36,22 @@ resource "google_compute_region_backend_service" "accesstier" {
   health_checks         = [google_compute_region_health_check.backend_service_loadbalancer_health_check.id]
   load_balancing_scheme = "EXTERNAL"
   protocol              = "TCP"
+  region                = var.region
+  backend {
+    group          = google_compute_region_instance_group_manager.accesstier_rigm.instance_group
+    balancing_mode = "CONNECTION"
+  }
+  connection_draining_timeout_sec = 0
+  iap {
+    enabled = false
+  }
+}
+
+resource "google_compute_region_backend_service" "accesstier_udp" {
+  name                  = "${var.name}-at-backend-svc"
+  health_checks         = [google_compute_region_health_check.backend_service_loadbalancer_health_check_udp.id]
+  load_balancing_scheme = "EXTERNAL"
+  protocol              = "UDP"
   region                = var.region
   backend {
     group          = google_compute_region_instance_group_manager.accesstier_rigm.instance_group
@@ -49,7 +79,7 @@ resource "google_compute_forwarding_rule" "accesstier_udp" {
   ip_protocol           = "UDP"
   load_balancing_scheme = "EXTERNAL"
   ports                 = [var.tunnel_port]
-  backend_service       = google_compute_region_backend_service.accesstier.id
+  backend_service       = google_compute_region_backend_service.accesstier_udp.id
   ip_address            = google_compute_address.external.address
 }
 
