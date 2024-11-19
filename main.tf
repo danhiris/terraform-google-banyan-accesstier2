@@ -21,7 +21,7 @@ resource "google_compute_region_backend_service" "accesstier" {
   name                  = "${var.name}-at-backend-svc"
   health_checks         = [google_compute_region_health_check.backend_service_loadbalancer_health_check.id]
   load_balancing_scheme = "EXTERNAL"
-  protocol              = "UNSPECIFIED"
+  protocol              = "TCP"
   region                = var.region
   backend {
     group          = google_compute_region_instance_group_manager.accesstier_rigm.instance_group
