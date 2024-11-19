@@ -13,7 +13,7 @@ resource "google_compute_region_health_check" "backend_service_loadbalancer_heal
 }
 
 resource "google_compute_region_health_check" "backend_service_loadbalancer_health_check_udp" {
-  name                = "${var.name}-at-backend-svc-lb-hc"
+  name                = "${var.name}-at-backend-svc-udp-lb-hc"
   check_interval_sec  = 5
   timeout_sec         = 5
   healthy_threshold   = 2
@@ -48,7 +48,7 @@ resource "google_compute_region_backend_service" "accesstier" {
 }
 
 resource "google_compute_region_backend_service" "accesstier_udp" {
-  name                  = "${var.name}-at-backend-svc"
+  name                  = "${var.name}-udp-at-backend-svc"
   health_checks         = [google_compute_region_health_check.backend_service_loadbalancer_health_check_udp.id]
   load_balancing_scheme = "EXTERNAL"
   protocol              = "UDP"
